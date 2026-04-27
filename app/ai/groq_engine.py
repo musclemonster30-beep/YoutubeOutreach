@@ -7,7 +7,20 @@ SYSTEM_PROMPT = "You write short, persuasive outreach messages for fitness influ
 
 def generate_message(name, platform, followers):
     try:
-        prompt = f"Write a short DM for {name} ({platform}, {followers} followers) offering monetization and sponsorship opportunities."
+        prompt = f"""
+Write a short DM to a fitness creator.
+
+Name: {name}
+Platform: {platform}
+Followers: {followers}
+
+Offer:
+- monetization opportunity
+- YouTube/Instagram asset partnership
+- sponsorship integration
+
+Keep it natural, short, and non-spammy.
+"""
 
         res = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
