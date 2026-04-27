@@ -1,21 +1,34 @@
+import time
 from app.ai.groq_engine import generate_message
+
+# Replace with real leads later
+leads = [
+    {"name": "FitnessCreatorAlpha", "niche": "fitness", "followers": "120k"},
+    {"name": "BodybuilderPro", "niche": "bodybuilding", "followers": "250k"},
+]
 
 
 def run_outreach():
-    leads = [
-        {"name": "FitnessCreatorAlpha", "niche": "Fitness", "followers": "120k"},
-        {"name": "BodybuilderPro", "niche": "Bodybuilding", "followers": "250k"},
-    ]
+    print("Starting outreach loop...")
 
-    print(f"Loaded {len(leads)} leads\n")
+    while True:
+        for lead in leads:
+            try:
+                message = generate_message(
+                    name=lead["name"],
+                    niche=lead["niche"],
+                    followers=lead["followers"],
+                )
 
-    for lead in leads:
-        try:
-            message = generate_message(lead)
+                print(f"\nSending to: {lead['name']}")
+                print(message)
 
-            print(f"Sending to: {lead['name']}")
-            print(message)
-            print("-" * 50)
+                # 👉 Later: send via Telegram API here
 
-        except Exception as e:
-            print(f"❌ Failed for {lead['name']}: {e}")
+                time.sleep(10)
+
+            except Exception as e:
+                print(f"Error: {e}")
+
+        print("Cycle complete. Sleeping...")
+        time.sleep(60)
