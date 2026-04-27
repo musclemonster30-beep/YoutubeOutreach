@@ -3,46 +3,45 @@ import time
 import requests
 from app.ai.groq_engine import generate_message
 
-# ENV
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
-# TELEGRAM SEND
 def send_telegram(text):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-    payload = {
+    r = requests.post(url, json={
         "chat_id": CHAT_ID,
         "text": text
-    }
-    response = requests.post(url, json=payload)
-    print("Telegram response:", response.text)
+    })
+    print("Telegram:", r.text)
 
-# LOAD LEADS
-def load_leads():
-    return [
-        {"name": "FitnessCreatorAlpha", "followers": "120k"},
-        {"name": "BodybuilderPro", "followers": "250k"}
-    ]
-
-# MAIN LOOP (runs forever → required for Render)
 def run():
-    print("Bot started...")
+    print("BOT STARTED")
 
     while True:
-        leads = load_leads()
+        try:
+            leads = [
+                {"name": "FitnessCreatorAlpha", "followers": "120k"},
+                {"name": "BodybuilderPro", "followers": "250k"}
+            ]
 
-        for lead in leads:
-            msg = generate_message(
-                name=lead["name"],
-                followers=lead["followers"]
-            )
+            for lead in leads:
+                print("Generating for:", lead)
 
-            print("Sending:", msg)
-            send_telegram(msg)
+                msg = generate_message(
+                    name=lead["name"],
+                    followers=lead["followers"]
+                )
 
-            time.sleep(10)  # prevent spam
+                print("Sending:", msg)
+                send_telegram(msg)
 
-        time.sleep(300)  # wait 5 min before next cycle
+                time.sleep(10)
+
+            time.sleep(300)
+
+        except Exception as e:
+            print("ERROR:", str(e))
+            time.sleep(30)
 
 if __name__ == "__main__":
     run()
