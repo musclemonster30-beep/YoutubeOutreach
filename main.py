@@ -1,5 +1,5 @@
 import time
-from app.services.outreach import run_outreach
+from outreach import run_outreach
 
 
 def start_loop():
