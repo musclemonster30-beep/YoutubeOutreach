@@ -3,27 +3,31 @@ from groq import Groq
 
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-
-def generate_message(name, niche, followers):
+def generate_message(name, followers):
     prompt = f"""
-You are an expert dealmaker.
+You are writing a cold DM to a creator.
 
-Your goal is to pitch the SALE of a YouTube channel.
+Your goal: propose selling or partnering on a YouTube channel.
 
-Lead Info:
+Context:
+- We own a YouTube channel in the bizarre / history niche
+- We are looking to sell it or partner with creators
+- Tone: direct, confident, business-focused
+- No generic influencer marketing talk
+
+Lead:
 Name: {name}
-Niche: {niche}
-Followers: {followers}
+Audience Size: {followers}
 
-Write a SHORT, direct message proposing:
-- Selling a YouTube channel asset
-- Monetization opportunity
-- Keep it natural, human, not spammy
+Write a short message (3–5 lines max).
 """
 
-    response = client.chat.completions.create(
-        model="llama-3.1-8b-instant",  # ✅ updated working model
-        messages=[{"role": "user", "content": prompt}],
+    completion = client.chat.completions.create(
+        model="llama3-70b-8192",
+        messages=[
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.7
     )
 
-    return response.choices[0].message.content
+    return completion.choices[0].message.content.strip()
