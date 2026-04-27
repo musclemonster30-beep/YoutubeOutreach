@@ -1,6 +1,7 @@
 import time
 import threading
 import os
+import json
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 from app.ai.groq_engine import generate_message
@@ -9,11 +10,16 @@ from app.outreach.telegram_sender import send_telegram_message
 
 CHAT_ID = "YOUR_CHAT_ID"
 
+
 def run_campaign():
     leads = load_leads()
     print(f"Loaded {len(leads)} leads")
 
     for lead in leads:
+        # ✅ skip already contacted
+        if lead.get("sent"):
+            continue
+
         message = generate_message(
             lead["name"],
             lead["platform"],
@@ -24,7 +30,16 @@ def run_campaign():
         print(message)
 
         send_telegram_message(CHAT_ID, message)
-        time.sleep(30)  # anti-spam delay
+
+        # ✅ mark as sent
+        lead["sent"] = True
+
+        time.sleep(30)
+
+    # ✅ save updated leads
+    with open("data/leads.json", "w") as f:
+        json.dump(leads, f, indent=2)
+
 
 def main_loop():
     while True:
@@ -43,14 +58,21 @@ def main_loop():
 
 PORT = int(os.environ.get("PORT", 10000))
 
+
 def run_bot():
     main_loop()
+
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.end_headers()
         self.wfile.write(b"Bot is running")
+
+    def do_HEAD(self):
+        self.send_response(200)
+        self.end_headers()
+
 
 if __name__ == "__main__":
     threading.Thread(target=run_bot).start()
