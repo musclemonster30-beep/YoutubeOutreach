@@ -1,28 +1,48 @@
-import threading
 import os
-from http.server import BaseHTTPRequestHandler, HTTPServer
-from outreach import run_outreach
+import time
+import requests
+from app.ai.groq_engine import generate_message
 
-PORT = int(os.environ.get("PORT", 10000))
+# ENV
+BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
+# TELEGRAM SEND
+def send_telegram(text):
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+    payload = {
+        "chat_id": CHAT_ID,
+        "text": text
+    }
+    response = requests.post(url, json=payload)
+    print("Telegram response:", response.text)
 
-class Handler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.send_header("Content-type", "text/plain")
-        self.end_headers()
-        self.wfile.write(b"Bot is running")
+# LOAD LEADS
+def load_leads():
+    return [
+        {"name": "FitnessCreatorAlpha", "followers": "120k"},
+        {"name": "BodybuilderPro", "followers": "250k"}
+    ]
 
+# MAIN LOOP (runs forever → required for Render)
+def run():
+    print("Bot started...")
 
-def start_server():
-    server = HTTPServer(("", PORT), Handler)
-    print(f"Web server running on port {PORT}")
-    server.serve_forever()
+    while True:
+        leads = load_leads()
 
+        for lead in leads:
+            msg = generate_message(
+                name=lead["name"],
+                followers=lead["followers"]
+            )
+
+            print("Sending:", msg)
+            send_telegram(msg)
+
+            time.sleep(10)  # prevent spam
+
+        time.sleep(300)  # wait 5 min before next cycle
 
 if __name__ == "__main__":
-    # Run outreach in background thread
-    threading.Thread(target=run_outreach, daemon=True).start()
-
-    # Start web server (required by Render)
-    start_server()
+    run()
