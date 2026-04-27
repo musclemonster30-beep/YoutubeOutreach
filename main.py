@@ -3,7 +3,7 @@ from app.ai.groq_engine import generate_message
 from app.leads.lead_loader import load_leads
 from app.outreach.telegram_sender import send_telegram_message
 
-CHAT_ID = "YOUR_CHAT_ID"
+CHAT_ID = "5968237820"
 
 def run_campaign():
     leads = load_leads()
