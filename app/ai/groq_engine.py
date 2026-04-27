@@ -1,46 +1,49 @@
 from groq import Groq
-from app.config import GROQ_API_KEY
+import os
 
-client = Groq(api_key=GROQ_API_KEY)
+# Initialize client using env variable (Render safe)
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-SYSTEM_PROMPT = "You write short, direct business outreach messages."
 
-def generate_message(name, platform, followers):
-    try:
-        prompt = f"""
-Write a short, direct DM to a fitness influencer.
+def generate_message(lead):
+    """
+    Generate a HIGH-CONVERSION outreach message
+    focused on selling / partnering around a YouTube asset
+    """
 
-You are offering access to or sale of an existing YouTube channel.
+    prompt = f"""
+You are an elite dealmaker reaching out to creators.
 
-Context:
-- 165k subscriber bodybuilding news channel
-- Monetized via sponsorships and placements
+You are NOT offering sponsorships.
 
-Goal:
-- Present it as an opportunity
+You are offering access to an already-built YouTube channel asset
+that can be:
+- acquired
+- partnered on
+- or scaled together
+
+This is a BUSINESS opportunity.
+
+Lead Info:
+Name: {lead['name']}
+Niche: {lead['niche']}
+Audience: {lead['followers']}
+
+Rules:
+- 3 to 4 lines max
 - Make it feel exclusive
-- Keep it short and natural
+- No corporate tone
+- No generic influencer marketing language
+- Sound like a serious opportunity, not a pitch
 
-Do NOT sound like an agency.
-Do NOT talk about helping them grow.
-Be direct.
-
-Lead:
-Name: {name}
-Platform: {platform}
-Followers: {followers}
+Write the message:
 """
 
-        res = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": prompt}
-            ],
-        )
+    response = client.chat.completions.create(
+        model="mixtral-8x7b-32768",
+        messages=[
+            {"role": "user", "content": prompt}
+        ]
+    )
 
-        return res.choices[0].message.content
-
-    except Exception as e:
-        print(f"Groq error: {e}")
-        return "Error generating message"
+    return response.choices[0].message.content.strip()
