@@ -1,47 +1,29 @@
 import os
-import time
-import requests
-from app.ai.groq_engine import generate_message
+from http.server import BaseHTTPRequestHandler, HTTPServer
+import threading
 
-BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+from outreach import run_outreach  # this MUST match your file name
 
-def send_telegram(text):
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-    r = requests.post(url, json={
-        "chat_id": CHAT_ID,
-        "text": text
-    })
-    print("Telegram:", r.text)
+PORT = int(os.environ.get("PORT", 10000))
 
-def run():
-    print("BOT STARTED")
 
-    while True:
-        try:
-            leads = [
-                {"name": "FitnessCreatorAlpha", "followers": "120k"},
-                {"name": "BodybuilderPro", "followers": "250k"}
-            ]
+class Handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-type", "text/plain")
+        self.end_headers()
+        self.wfile.write(b"Bot is running")
 
-            for lead in leads:
-                print("Generating for:", lead)
 
-                msg = generate_message(
-                    name=lead["name"],
-                    followers=lead["followers"]
-                )
+def start_server():
+    server = HTTPServer(("0.0.0.0", PORT), Handler)
+    print(f"Server running on port {PORT}")
+    server.serve_forever()
 
-                print("Sending:", msg)
-                send_telegram(msg)
-
-                time.sleep(10)
-
-            time.sleep(300)
-
-        except Exception as e:
-            print("ERROR:", str(e))
-            time.sleep(30)
 
 if __name__ == "__main__":
-    run()
+    # Run bot in background thread
+    threading.Thread(target=run_outreach, daemon=True).start()
+
+    # Run web server (REQUIRED FOR RENDER)
+    start_server()
