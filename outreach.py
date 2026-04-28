@@ -1,30 +1,27 @@
 import time
-from app.ai.groq_engine import generate_message
+import requests
+import os
 
-leads = [
-    {"name": "FitnessCreatorAlpha", "niche": "fitness", "followers": "120k"},
-    {"name": "BodybuilderPro", "niche": "bodybuilding", "followers": "250k"},
-]
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+
+
+def send_message(text):
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    data = {
+        "chat_id": CHAT_ID,
+        "text": text
+    }
+    requests.post(url, data=data)
+
 
 def run_outreach():
-    print("Starting outreach loop...")
+    print("Outreach bot started")
 
     while True:
-        for lead in leads:
-            try:
-                message = generate_message(
-                    name=lead["name"],
-                    niche=lead["niche"],
-                    followers=lead["followers"]
-                )
-
-                print(f"\nSending to: {lead['name']}")
-                print(message)
-
-                time.sleep(10)
-
-            except Exception as e:
-                print(f"Error: {e}")
-
-        print("Cycle complete. Sleeping...")
-        time.sleep(60)
+        try:
+            send_message("Bot is alive 🚀")
+            time.sleep(60)
+        except Exception as e:
+            print("Error:", e)
+            time.sleep(10)
