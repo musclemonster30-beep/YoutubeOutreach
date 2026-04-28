@@ -7,21 +7,33 @@ CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
 
 def send_message(text):
-    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-    data = {
-        "chat_id": CHAT_ID,
-        "text": text
-    }
-    requests.post(url, data=data)
+    try:
+        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+        data = {
+            "chat_id": CHAT_ID,
+            "text": text
+        }
+        r = requests.post(url, data=data)
+        print("TELEGRAM RESPONSE:", r.text)
+    except Exception as e:
+        print("SEND ERROR:", e)
 
 
 def run_outreach():
-    print("Outreach bot started")
+    print("=== OUTREACH STARTED ===")
+
+    if not TELEGRAM_BOT_TOKEN or not CHAT_ID:
+        print("❌ ENV VARIABLES MISSING")
+        return
+
+    # FORCE first message
+    send_message("🚀 BOT STARTED")
 
     while True:
         try:
-            send_message("Bot is alive 🚀")
+            print("Loop running...")
+            send_message("💰 Bot loop active")
             time.sleep(60)
         except Exception as e:
-            print("Error:", e)
-            time.sleep(10)
+            print("LOOP ERROR:", e)
+            time.sleep(5)
