@@ -1,38 +1,72 @@
 import os
-from http.server import BaseHTTPRequestHandler, HTTPServer
+import time
+import requests
 import threading
-import traceback
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
-from outreach import run_outreach
+from app.ai.groq_engine import generate_message
 
-PORT = int(os.environ.get("PORT", 10000))
+# ENV
+BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+
+# SEND TO TELEGRAM
+def send_telegram(text):
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+    response = requests.post(url, json={
+        "chat_id": CHAT_ID,
+        "text": text
+    })
+    print("Telegram:", response.text)
 
 
+# YOUR BOT LOOP
+def run_bot():
+    print("BOT STARTED")
+
+    while True:
+        try:
+            leads = [
+                {"name": "FitnessCreatorAlpha", "followers": "120k"},
+                {"name": "BodybuilderPro", "followers": "250k"}
+            ]
+
+            for lead in leads:
+                print("Generating for:", lead)
+
+                msg = generate_message(
+                    name=lead["name"],
+                    followers=lead["followers"]
+                )
+
+                print("Sending:", msg)
+                send_telegram(msg)
+
+                time.sleep(10)
+
+            time.sleep(300)
+
+        except Exception as e:
+            print("ERROR:", str(e))
+            time.sleep(30)
+
+
+# FAKE WEB SERVER (FOR RENDER)
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
-        self.send_header("Content-type", "text/plain")
         self.end_headers()
         self.wfile.write(b"Bot is running")
 
 
 def start_server():
-    server = HTTPServer(("0.0.0.0", PORT), Handler)
-    print(f"Server running on port {PORT}")
+    port = int(os.environ.get("PORT", 10000))
+    server = HTTPServer(("", port), Handler)
+    print(f"Server running on port {port}")
     server.serve_forever()
 
 
-def safe_run():
-    try:
-        print("🚀 Starting outreach thread...")
-        run_outreach()
-    except Exception as e:
-        print("❌ THREAD CRASHED:")
-        traceback.print_exc()
-
-
+# RUN BOTH
 if __name__ == "__main__":
-    thread = threading.Thread(target=safe_run)
-    thread.start()
-
+    threading.Thread(target=run_bot).start()
     start_server()
