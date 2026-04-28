@@ -10,19 +10,20 @@ You are writing a cold DM to a creator.
 Goal: propose selling or partnering on a YouTube channel.
 
 Context:
-- Niche: bizarre history / WWII
-- Intent: sell or partner
-- Tone: direct, no fluff
+- We own a YouTube channel in the bizarre/history niche
+- We want to sell or partner
+- Tone: direct, confident, business-focused
+- No generic influencer marketing language
 
 Lead:
 Name: {name}
 Audience: {followers}
 
-Write a short message (3–4 lines).
+Write a short message (3–4 lines max).
 """
 
     completion = client.chat.completions.create(
-        model="llama-3.1-70b-versatile",   # ✅ UPDATED MODEL
+        model="llama-3.1-70b-versatile",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.7
     )
