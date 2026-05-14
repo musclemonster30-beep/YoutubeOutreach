@@ -6,7 +6,12 @@ from sqlalchemy import select
 from database import AsyncSessionLocal
 from models import Lead
 
-TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
+TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
+if not TELEGRAM_TOKEN:
+    raise RuntimeError(
+        "TELEGRAM_TOKEN is not set.\n"
+        "Fix: Go to Render Dashboard → your Web Service → Environment → add TELEGRAM_TOKEN."
+    )
 
 bot = Bot(token=TELEGRAM_TOKEN)
 dp = Dispatcher()
@@ -45,7 +50,7 @@ async def cmd_leads(message: Message):
 async def cmd_pitch(message: Message):
     args = message.text.strip().split(maxsplit=1)
     if len(args) < 2:
-        await message.answer("Usage: /pitch <niche>\nSupported niches: supplement, apparel")
+        await message.answer("Usage: /pitch <niche>\nSupported: supplement, apparel")
         return
 
     niche = args[1].strip().lower()
@@ -71,8 +76,7 @@ async def cmd_pitch(message: Message):
         pitch = (
             "<b>Acquisition Pitch — Apparel Brands</b>\n\n"
             "We are offering a strategic acquisition of <b>MuscleMonster</b>, a YouTube channel with "
-            "<b>165,000+ organic subscribers</b> built entirely around fitness lifestyle and physique culture — "
-            "a core audience segment for performance and lifestyle apparel.\n\n"
+            "<b>165,000+ organic subscribers</b> built entirely around fitness lifestyle and physique culture.\n\n"
             "<b>Brand Authority Angle:</b>\n"
             "• A decade of consistent content establishes category credibility no paid campaign can replicate\n"
             "• Channel authority transfers directly into product credibility for an acquiring apparel brand\n"
