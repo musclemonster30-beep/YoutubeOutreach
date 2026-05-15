@@ -3,6 +3,7 @@ uvicorn[standard]==0.34.2
 aiogram==3.20.0
 sqlalchemy==2.0.40
 asyncpg==0.30.0
+greenlet==3.2.2
 psycopg2-binary==2.9.10
 python-dotenv==1.1.0
 aiohttp==3.11.18
