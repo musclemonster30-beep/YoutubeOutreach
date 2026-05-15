@@ -10,74 +10,93 @@ from bot import bot, dp
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(name)s: %(message)s"
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
 )
 logger = logging.getLogger(__name__)
 
-WEBHOOK_HOST = os.environ.get("WEBHOOK_HOST")
-if not WEBHOOK_HOST:
+_webhook_host = os.environ.get("WEBHOOK_HOST", "").rstrip("/")
+if not _webhook_host:
     raise RuntimeError(
         "WEBHOOK_HOST is not set. "
-        "Go to Render Dashboard → Web Service → Environment → "
+        "Render Dashboard → Web Service → Environment → "
         "add WEBHOOK_HOST = https://youtubeoutreach.onrender.com"
     )
 
 WEBHOOK_PATH = "/webhook"
-WEBHOOK_URL = f"{WEBHOOK_HOST}{WEBHOOK_PATH}"
+WEBHOOK_URL = f"{_webhook_host}{WEBHOOK_PATH}"
+HEALTH_URL = f"{_webhook_host}/health"
 
-# Keep-alive ping every 10 minutes to prevent Render free tier spin-down
-async def keep_alive():
+
+async def _keep_alive():
+    """Pings /health every 10 minutes to prevent Render free-tier spin-down."""
     import aiohttp
-    url = f"{WEBHOOK_HOST}/health"
+    await asyncio.sleep(60)  # Initial delay — let the server fully start first
     while True:
-        await asyncio.sleep(600)
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.get(url) as resp:
+                async with session.get(HEALTH_URL, timeout=aiohttp.ClientTimeout(total=10)) as resp:
                     logger.info(f"Keep-alive ping: {resp.status}")
         except Exception as e:
             logger.warning(f"Keep-alive ping failed: {e}")
+        await asyncio.sleep(600)  # 10 minutes
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # 1. Create all database tables
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     logger.info("Database tables verified/created.")
 
+    # 2. Register Telegram webhook — drop any stale queued updates
     await bot.set_webhook(WEBHOOK_URL, drop_pending_updates=True)
-    logger.info(f"Telegram webhook set to: {WEBHOOK_URL}")
+    logger.info(f"Telegram webhook registered: {WEBHOOK_URL}")
 
-    # Start keep-alive background task
-    task = asyncio.create_task(keep_alive())
+    # 3. Start keep-alive background task
+    keep_alive_task = asyncio.create_task(_keep_alive())
     logger.info("Keep-alive task started.")
 
     yield
 
-    task.cancel()
-    await bot.delete_webhook()
+    # Graceful shutdown
+    keep_alive_task.cancel()
+    try:
+        await keep_alive_task
+    except asyncio.CancelledError:
+        pass
+
+    await bot.delete_webhook(drop_pending_updates=False)
     await bot.session.close()
-    logger.info("Shutdown complete.")
+    await engine.dispose()
+    logger.info("Shutdown complete — webhook removed, DB pool closed.")
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    title="MuscleMonster Outreach Bot",
+    version="2.0.0",
+    lifespan=lifespan,
+)
 
 
 @app.post(WEBHOOK_PATH)
-async def telegram_webhook(request: Request):
+async def telegram_webhook(request: Request) -> Response:
+    """
+    Receives Telegram updates and feeds them to the aiogram dispatcher.
+    Always returns 200 — Telegram disables webhooks that return repeated errors.
+    """
     try:
         body = await request.json()
         update = Update.model_validate(body)
         await dp.feed_update(bot=bot, update=update)
-        return Response(status_code=200)
     except Exception as e:
-        logger.error(f"Webhook processing error: {e}")
-        return Response(status_code=200)  # Always return 200 to Telegram
+        # Log the error but never let it surface as a non-200 to Telegram
+        logger.error(f"Webhook processing error: {e}", exc_info=True)
+    return Response(status_code=200)
 
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "service": "MuscleMonster Outreach Bot"}
+    return {"status": "ok", "service": "MuscleMonster Outreach Bot", "version": "2.0.0"}
 
 
 @app.get("/")
