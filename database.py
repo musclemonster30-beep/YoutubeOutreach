@@ -1,29 +1,51 @@
 import os
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
+import logging
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy.pool import NullPool
 
-raw_url = os.environ.get("DATABASE_URL")
+logger = logging.getLogger(__name__)
 
-if not raw_url:
-    raise RuntimeError(
-        "DATABASE_URL is not set. "
-        "Go to Render Dashboard → your Postgres service → Connect → "
-        "copy Internal Database URL → paste as DATABASE_URL in Web Service Environment tab."
-    )
+def _build_url() -> str:
+    raw = os.environ.get("DATABASE_URL", "")
+    if not raw:
+        raise RuntimeError(
+            "DATABASE_URL is not set. "
+            "Render Dashboard → Postgres service → Connect → "
+            "copy Internal Database URL → paste into Web Service Environment tab."
+        )
+    if raw.startswith("postgres://"):
+        raw = raw.replace("postgres://", "postgresql+asyncpg://", 1)
+    elif raw.startswith("postgresql://") and "+asyncpg" not in raw:
+        raw = raw.replace("postgresql://", "postgresql+asyncpg://", 1)
+    return raw
 
-if raw_url.startswith("postgres://"):
-    raw_url = raw_url.replace("postgres://", "postgresql+asyncpg://", 1)
-elif raw_url.startswith("postgresql://") and "+asyncpg" not in raw_url:
-    raw_url = raw_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+DATABASE_URL = _build_url()
 
-engine = create_async_engine(raw_url, echo=False, pool_pre_ping=True)
+engine = create_async_engine(
+    DATABASE_URL,
+    echo=False,
+    pool_pre_ping=True,
+    pool_size=5,
+    max_overflow=10,
+    pool_timeout=30,
+    pool_recycle=1800,
+)
 
-AsyncSessionLocal = sessionmaker(
+AsyncSessionLocal = async_sessionmaker(
     bind=engine,
     class_=AsyncSession,
     expire_on_commit=False,
+    autoflush=False,
+    autocommit=False,
 )
 
 async def get_db():
     async with AsyncSessionLocal() as session:
-        yield session
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
