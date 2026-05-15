@@ -10,7 +10,7 @@ TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 if not TELEGRAM_TOKEN:
     raise RuntimeError(
         "TELEGRAM_TOKEN is not set.\n"
-        "Fix: Go to Render Dashboard → your Web Service → Environment → add TELEGRAM_TOKEN."
+        "Fix: Render Dashboard → Web Service → Environment → add TELEGRAM_TOKEN."
     )
 
 bot = Bot(token=TELEGRAM_TOKEN)
@@ -58,38 +58,54 @@ async def cmd_pitch(message: Message):
     if niche == "supplement":
         pitch = (
             "<b>Acquisition Pitch — Supplement Brands</b>\n\n"
-            "We are offering a strategic acquisition of <b>MuscleMonster</b>, a bodybuilding-focused YouTube channel "
-            "established in 2015 with <b>165,000+ organic subscribers</b> and a highly qualified 18–34 male demographic.\n\n"
+            "We are offering a strategic acquisition of <b>MuscleMonster</b>, "
+            "a bodybuilding-focused YouTube channel established in 2015 with "
+            "<b>165,000+ organic subscribers</b> and a highly engaged 18–34 male demographic.\n\n"
+            "<b>What you are acquiring:</b>\n"
+            "• A 10-year-old YouTube channel with deep category authority in bodybuilding and strength training\n"
+            "• 165,000+ organic subscribers — zero paid growth, zero inflated metrics\n"
+            "• A loyal audience that actively buys supplements, protein, and training gear\n"
+            "• Full content library with evergreen videos driving compounding monthly views\n\n"
             "<b>Why this beats paid acquisition:</b>\n"
-            "• Eliminates dependency on Meta/Google ad spend to reach the same verified fitness audience\n"
-            "• Owned distribution — no CPM, no auction pressure, no algorithm tax on every impression\n"
-            "• Existing content library drives compounding organic reach month over month\n\n"
-            "<b>Bundle Option — Complete Acquisition Package:</b>\n"
-            "This deal can include the premium exact-match domain <b>isoproteinpowder.com</b>, "
-            "enabling an end-to-end DTC brand infrastructure: owned audience + SEO-authoritative domain "
-            "in a single transaction. Ideal for launching or consolidating a private-label protein line.\n\n"
-            "Open to discussing asset valuation, revenue multiples, and transition terms. "
+            "• Instant owned distribution to your exact target customer — no CPM, no auction, no ad fatigue\n"
+            "• Every product mention, review, or integration reaches a warm, trust-verified audience\n"
+            "• Channel authority compounds over time — unlike ad spend that stops the moment you pause\n\n"
+            "<b>What's included:</b>\n"
+            "• Full transfer of the YouTube channel and all associated assets\n"
+            "• Content library, community tab, and subscriber base\n"
+            "• Transition support to ensure continuity of audience trust\n\n"
+            "Open to discussing valuation, deal structure, and transition terms.\n"
             "Reply to schedule a call."
         )
 
     elif niche == "apparel":
         pitch = (
             "<b>Acquisition Pitch — Apparel Brands</b>\n\n"
-            "We are offering a strategic acquisition of <b>MuscleMonster</b>, a YouTube channel with "
-            "<b>165,000+ organic subscribers</b> built entirely around fitness lifestyle and physique culture.\n\n"
-            "<b>Brand Authority Angle:</b>\n"
-            "• A decade of consistent content establishes category credibility no paid campaign can replicate\n"
-            "• Channel authority transfers directly into product credibility for an acquiring apparel brand\n"
-            "• Community trust = lower CAC for apparel drops, limited editions, and ambassador programs\n\n"
-            "<b>Local SEO & Discovery:</b>\n"
-            "• Long-form video content indexes on both YouTube and Google, driving evergreen search traffic\n"
-            "• Existing video metadata targets high-intent fitness keywords for gym, training, and lifestyle queries\n"
-            "• Provides a content moat competitors cannot replicate quickly\n\n"
-            "Open to asset valuation discussions, earnout structures, and phased transition planning. "
+            "We are offering a strategic acquisition of <b>MuscleMonster</b>, "
+            "a YouTube channel with <b>165,000+ organic subscribers</b> built entirely "
+            "around fitness lifestyle, physique culture, and strength training.\n\n"
+            "<b>What you are acquiring:</b>\n"
+            "• A 10-year-old channel with established brand authority in the fitness space\n"
+            "• 165,000+ organic subscribers with strong affinity for training and lifestyle apparel\n"
+            "• A content moat built over a decade — impossible to replicate quickly\n"
+            "• Full video library indexing on both YouTube and Google for high-intent fitness searches\n\n"
+            "<b>Why this works for apparel:</b>\n"
+            "• Direct access to a community that buys on identity and aspiration — core apparel drivers\n"
+            "• Channel credibility transfers directly to product credibility — lower CAC from day one\n"
+            "• Ideal platform for drops, limited editions, ambassador launches, and lookbooks\n"
+            "• Evergreen content keeps driving discovery without ongoing ad spend\n\n"
+            "<b>What's included:</b>\n"
+            "• Full transfer of the YouTube channel and all associated assets\n"
+            "• Content library, community tab, and subscriber base\n"
+            "• Transition support to ensure continuity of audience trust\n\n"
+            "Open to discussing valuation, deal structure, and transition terms.\n"
             "Reply to schedule a call."
         )
 
     else:
-        pitch = f"No pitch template found for niche: <b>{niche}</b>.\nCurrently supported: supplement, apparel."
+        pitch = (
+            f"No pitch template for niche: <b>{niche}</b>.\n"
+            "Currently supported: supplement, apparel"
+        )
 
     await message.answer(pitch, parse_mode="HTML")
