@@ -6,12 +6,11 @@ raw_url = os.environ.get("DATABASE_URL")
 
 if not raw_url:
     raise RuntimeError(
-        "DATABASE_URL is not set.\n"
-        "Fix: Go to Render Dashboard → your Postgres service → Connect → "
-        "copy Internal Database URL → paste it as DATABASE_URL in your Web Service Environment tab."
+        "DATABASE_URL is not set. "
+        "Go to Render Dashboard → your Postgres service → Connect → "
+        "copy Internal Database URL → paste as DATABASE_URL in Web Service Environment tab."
     )
 
-# Render gives postgres:// — asyncpg requires postgresql+asyncpg://
 if raw_url.startswith("postgres://"):
     raw_url = raw_url.replace("postgres://", "postgresql+asyncpg://", 1)
 elif raw_url.startswith("postgresql://") and "+asyncpg" not in raw_url:
